@@ -5,3 +5,8 @@ bin/
 .classpath
 .project
 .config/
+!.idea/
+.idea/*
+!.idea/runConfigurations/
+**/.gradle/
+**/build/
