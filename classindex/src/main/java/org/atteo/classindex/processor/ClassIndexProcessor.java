@@ -129,7 +129,14 @@ public class ClassIndexProcessor extends AbstractProcessor {
 
 	@Override
 	public Set<String> getSupportedAnnotationTypes() {
+		// causes non-incremental builds
 		return Collections.singleton("*");
+		// my attempt
+		// this results in incomplete indexing when running incremental builds
+//		return new HashSet<String>(){{
+//			add(org.atteo.classindex.IndexAnnotated.class.getName());
+//			add(org.atteo.classindex.IndexSubclasses.class.getName());
+//		}};
 	}
 
 	@Override
