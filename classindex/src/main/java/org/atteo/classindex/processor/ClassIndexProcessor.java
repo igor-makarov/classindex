@@ -23,13 +23,8 @@ import java.io.Writer;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Inherited;
 import java.lang.annotation.Repeatable;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.lang.reflect.Type;
+import java.util.*;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
@@ -37,11 +32,7 @@ import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.AnnotationValue;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.PackageElement;
-import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.*;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
@@ -129,14 +120,27 @@ public class ClassIndexProcessor extends AbstractProcessor {
 
 	@Override
 	public Set<String> getSupportedAnnotationTypes() {
-		// causes non-incremental builds
-		return Collections.singleton("*");
-		// my attempt
-		// this results in incomplete indexing when running incremental builds
-//		return new HashSet<String>(){{
-//			add(org.atteo.classindex.IndexAnnotated.class.getName());
-//			add(org.atteo.classindex.IndexSubclasses.class.getName());
-//		}};
+		List<String> additionalAnnotations = new ArrayList<>();
+		for (ModuleElement m : processingEnv.getElementUtils().getAllModuleElements()) {
+			for (Element p : m.getEnclosedElements()) {
+				if (!(p instanceof PackageElement)) {
+					continue;
+				}
+				for (Element t : p.getEnclosedElements()) {
+					if (!(t instanceof TypeElement)) {
+						continue;
+					}
+					if (t.getAnnotation(IndexAnnotated.class) != null) {
+						additionalAnnotations.add(((TypeElement)t).getQualifiedName().toString());
+					}
+				}
+			}
+		}
+		return new HashSet<String>(){{
+			add(IndexAnnotated.class.getName());
+			add(IndexSubclasses.class.getName());
+			addAll(additionalAnnotations);
+		}};
 	}
 
 	@Override
